@@ -4,6 +4,7 @@ numpy
 scikit-learn
 joblib
 plotly
+openpyxl
 langchain-community
 langchain-huggingface
 faiss-cpu
