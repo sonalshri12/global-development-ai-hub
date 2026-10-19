@@ -9,7 +9,6 @@ if not hasattr(np, 'unicode_'):
 
 import streamlit as st
 import pandas as pd
-import numpy as np
 import plotly.express as px
 from sklearn.preprocessing import StandardScaler
 from sklearn.cluster import KMeans
@@ -37,13 +36,14 @@ using **$K$-Means Clustering** based on health, economic, and social indicators.
 def load_and_preprocess_data(file_path):
     df = pd.read_excel(file_path)
     
-    # Clean monetary and percentage strings
+    # Strip hidden whitespace from column names
+    df.columns = df.columns.str.strip()
+    
+    # Clean monetary and percentage strings across all text/object columns
     money_cols = ['GDP', 'Health Exp/Capita', 'Tourism Inbound', 'Tourism Outbound', 'Business Tax Rate']
     for col in money_cols:
-        if col in df.columns and df[col].dtype == object:
-            df[col] = df[col].astype(str).str.replace('$', '', regex=False)\
-                                        .str.replace(',', '', regex=False)\
-                                        .str.replace('%', '', regex=False)
+        if col in df.columns:
+            df[col] = df[col].astype(str).str.replace(r'[\$,% ]', '', regex=True)
             df[col] = pd.to_numeric(df[col], errors='coerce')
 
     # Drop redundant columns
@@ -85,7 +85,6 @@ except Exception as e:
 # ==========================================
 # 3. MODEL TRAINING & DEPLOYMENT SAVING
 # ==========================================
-# Fit K-Means Model based on default/slider
 n_clusters = st.sidebar.slider("Select Number of Clusters (K):", min_value=2, max_value=6, value=3)
 
 kmeans = KMeans(n_clusters=n_clusters, random_state=42, n_init=10)
@@ -152,7 +151,6 @@ with tab4:
     selected_country = st.selectbox("Select a country to test prediction:", options=country_df.index.sort_values())
     
     if st.button("Predict Cluster for Selected Country"):
-        # Load back the saved artifacts to prove deployment functionality
         loaded_model = joblib.load('kmeans_deployed_model.pkl')
         loaded_scaler = joblib.load('scaler_deployed.pkl')
         
